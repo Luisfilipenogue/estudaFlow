@@ -102,7 +102,7 @@ sudo apt install python3-tk
 ### Clonando o repositório
 
 ```bash
-git clone https://github.com/SEU_USUARIO/estudaflow.git
+git clone https://github.com/Luisfilipenogue/estudaFlow.git
 cd estudaflow
 ```
 
