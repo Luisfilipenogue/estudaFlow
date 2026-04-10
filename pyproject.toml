@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "estudaflow"
+version = "1.0.0"
+description = "Organizador de estudos para estudantes com dificuldade de rotina"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Seu Nome", email = "seuemail@exemplo.com" }]
+requires-python = ">=3.11"
+dependencies = []  # tkinter é parte da stdlib
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "ruff>=0.4",
+]
+
+[project.scripts]
+estudaflow = "src.app:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --tb=short"
+
+[tool.ruff]
+line-length = 99
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101"]
+
+[tool.coverage.run]
+source = ["src"]
+omit = ["src/app.py"]   # GUI — não testado com headless
+
+[tool.coverage.report]
+show_missing = true
