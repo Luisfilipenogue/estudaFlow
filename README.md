@@ -212,9 +212,9 @@ Veja o histórico completo em [CHANGELOG.md](CHANGELOG.md).
 
 ## 👤 Autor
 
-**Seu Nome**  
-Disciplina: Nome da Disciplina  
-Repositório: [https://github.com/SEU_USUARIO/estudaflow](https://github.com/SEU_USUARIO/estudaflow)
+**Luis Filipe Nogueira de Moraes Araujo**  
+Disciplina: Bootcamp II  
+Repositório: [https://github.com/Luisfilipenogue/estudaFlow](https://github.com/Luisfilipenogue/estudaFlow)
 
 ---
 
