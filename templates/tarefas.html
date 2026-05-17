@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block title %}Tarefas — EstudaFlow{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h2>Tarefas</h2>
+  <p>Gerencie suas tarefas de estudo</p>
+</div>
+
+<!-- Formulário -->
+<div class="card" style="margin-bottom:24px">
+  <div class="card-title">Nova Tarefa</div>
+  <div class="form-grid">
+    <div class="form-group" style="grid-column: span 2">
+      <label>Título *</label>
+      <input type="text" id="task-title" placeholder="Ex: Estudar capítulo 5 de Cálculo" />
+    </div>
+    <div class="form-group">
+      <label>Disciplina</label>
+      <select id="task-subject">
+        <option value="">— nenhuma —</option>
+        {% for s in subjects %}
+          <option value="{{ s.name }}">{{ s.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Prazo (AAAA-MM-DD)</label>
+      <input type="date" id="task-due" />
+    </div>
+    <div class="form-group">
+      <label>Prioridade</label>
+      <select id="task-priority">
+        <option value="Alta">Alta</option>
+        <option value="Média" selected>Média</option>
+        <option value="Baixa">Baixa</option>
+      </select>
+    </div>
+    <div class="form-group" style="grid-column: span 2">
+      <label>Notas</label>
+      <input type="text" id="task-notes" placeholder="Observações opcionais..." />
+    </div>
+  </div>
+  <button class="btn btn-primary" onclick="addTask()">+ Adicionar Tarefa</button>
+</div>
+
+<!-- Lista -->
+<div class="card">
+  <div class="card-title">Todas as Tarefas</div>
+  <div class="table-wrap">
+    <table id="task-table">
+      <thead>
+        <tr>
+          <th>Título</th>
+          <th>Disciplina</th>
+          <th>Prazo</th>
+          <th>Prioridade</th>
+          <th>Status</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="task-tbody">
+        {% for item in tasks_with_flag %}
+        {% set task = item.task %}
+        {% set idx = loop.index0 %}
+        <tr id="row-{{ idx }}">
+          <td class="{% if task.done %}text-done{% endif %}">
+            {{ task.title }}
+            {% if item.is_holiday %}
+              <span class="badge badge-holiday" title="Prazo em feriado nacional!">🎉 feriado</span>
+            {% endif %}
+          </td>
+          <td style="color:var(--muted)">{{ task.subject or '—' }}</td>
+          <td style="font-family:var(--mono);font-size:12px">{{ task.due or '—' }}</td>
+          <td>
+            <span class="badge badge-{{ task.priority | lower | replace('é','e') }}">
+              {{ task.priority }}
+            </span>
+          </td>
+          <td>
+            {% if task.done %}
+              <span class="badge badge-done">✔ Concluída</span>
+            {% else %}
+              <span class="badge badge-pending">⏳ Pendente</span>
+            {% endif %}
+          </td>
+          <td>
+            <div class="gap-8">
+              <button class="btn btn-ghost btn-sm" onclick="toggleTask({{ idx }})">
+                {% if task.done %}↩ Reabrir{% else %}✔ Concluir{% endif %}
+              </button>
+              <button class="btn btn-danger btn-sm" onclick="deleteTask({{ idx }})">✕</button>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+        {% if not tasks_with_flag %}
+        <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:32px;font-family:var(--mono)">
+          Nenhuma tarefa cadastrada ainda.
+        </td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function addTask() {
+  const title = document.getElementById('task-title').value.trim();
+  if (!title) { showToast('O título é obrigatório.', '#F87171'); return; }
+  const body = {
+    title,
+    subject:  document.getElementById('task-subject').value,
+    due:      document.getElementById('task-due').value || null,
+    priority: document.getElementById('task-priority').value,
+    notes:    document.getElementById('task-notes').value,
+  };
+  const res = await api('POST', '/api/tasks', body);
+  if (res.ok) { showToast('Tarefa adicionada!', '#22D3A0'); location.reload(); }
+  else showToast(res.error, '#F87171');
+}
+
+async function toggleTask(idx) {
+  const res = await api('POST', `/api/tasks/${idx}/toggle`);
+  if (res.ok) location.reload();
+  else showToast(res.error, '#F87171');
+}
+
+async function deleteTask(idx) {
+  if (!confirm('Remover esta tarefa?')) return;
+  const res = await api('DELETE', `/api/tasks/${idx}`);
+  if (res.ok) { showToast('Tarefa removida.', '#FBBF24'); location.reload(); }
+  else showToast(res.error, '#F87171');
+}
+</script>
+{% endblock %}

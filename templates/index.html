@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — EstudaFlow{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h2>Dashboard</h2>
+  <p>Bem-vindo ao seu organizador de estudos · {{ today }}</p>
+</div>
+
+<!-- Stats -->
+<div class="stats-row">
+  <div class="stat-card">
+    <div class="stat-value" style="color:#A78BFA">{{ total }}</div>
+    <div class="stat-label">Total de tarefas</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value" style="color:#22D3A0">{{ done }}</div>
+    <div class="stat-label">Concluídas</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value" style="color:#FBBF24">{{ pending }}</div>
+    <div class="stat-label">Pendentes</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value" style="color:#F87171">{{ overdue }}</div>
+    <div class="stat-label">Atrasadas</div>
+  </div>
+</div>
+
+<!-- Feriados próximos -->
+<div class="card" style="margin-bottom:24px">
+  <div class="card-title">🇧🇷 Próximos Feriados Nacionais</div>
+  {% if upcoming_holidays %}
+    <div class="holiday-strip">
+      {% for h in upcoming_holidays %}
+        <div class="holiday-pill">
+          <div class="hdate">{{ h.date }}</div>
+          <div class="hname">{{ h.localName }}</div>
+        </div>
+      {% endfor %}
+    </div>
+    <p style="margin-top:12px;font-size:12px;color:var(--muted);font-family:var(--mono)">
+      Fonte: <a href="https://date.nager.at" target="_blank" style="color:var(--accent2)">Nager.Date API</a>
+    </p>
+  {% else %}
+    <p style="color:var(--muted);font-size:13px;font-family:var(--mono)">
+      Não foi possível carregar os feriados agora. Verifique sua conexão.
+    </p>
+  {% endif %}
+</div>
+
+<!-- Tarefas recentes -->
+<div class="card">
+  <div class="card-title">Tarefas Recentes</div>
+  {% if tasks %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Título</th>
+            <th>Disciplina</th>
+            <th>Prazo</th>
+            <th>Prioridade</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for task in tasks[-8:] | reverse %}
+          <tr>
+            <td class="{% if task.done %}text-done{% endif %}">{{ task.title }}</td>
+            <td style="color:var(--muted)">{{ task.subject or '—' }}</td>
+            <td style="font-family:var(--mono);font-size:12px">{{ task.due or '—' }}</td>
+            <td>
+              <span class="badge badge-{{ task.priority | lower | replace('é','e') }}">
+                {{ task.priority }}
+              </span>
+            </td>
+            <td>
+              {% if task.done %}
+                <span class="badge badge-done">✔ Concluída</span>
+              {% else %}
+                <span class="badge badge-pending">⏳ Pendente</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="mt-16">
+      <a href="/tarefas" class="btn btn-ghost btn-sm">Ver todas as tarefas →</a>
+    </div>
+  {% else %}
+    <p style="color:var(--muted);font-size:13px;font-family:var(--mono)">
+      Nenhuma tarefa cadastrada ainda.
+      <a href="/tarefas" style="color:var(--accent2)">Adicionar tarefa →</a>
+    </p>
+  {% endif %}
+</div>
+{% endblock %}

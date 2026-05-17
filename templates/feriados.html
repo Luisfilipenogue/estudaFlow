@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Feriados Brasileiros — EstudaFlow{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h2>🇧🇷 Feriados Nacionais</h2>
+  <p>Dados via Nager.Date API · Ano {{ year }}</p>
+</div>
+
+<!-- Seletor de ano -->
+<div class="card" style="margin-bottom:24px;display:flex;align-items:center;gap:16px">
+  <span style="font-size:13px;color:var(--muted);font-family:var(--mono)">Selecionar ano:</span>
+  {% for y in [year - 1, year, year + 1] %}
+    <a href="/feriados?year={{ y }}"
+       class="btn {% if y == year %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">
+      {{ y }}
+    </a>
+  {% endfor %}
+</div>
+
+<!-- Tabela de feriados -->
+<div class="card">
+  <div class="card-title">{{ holidays | length }} feriados em {{ year }}</div>
+  {% if holidays %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Nome (PT-BR)</th>
+            <th>Nome (EN)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for h in holidays %}
+          <tr>
+            <td style="font-family:var(--mono);color:var(--accent2);font-weight:700">{{ h.date }}</td>
+            <td style="font-weight:600">{{ h.localName }}</td>
+            <td style="color:var(--muted);font-size:12px">{{ h.name }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-top:16px;font-size:12px;color:var(--muted);font-family:var(--mono)">
+      Fonte: <a href="https://date.nager.at/api/v3/PublicHolidays/{{ year }}/BR"
+               target="_blank" style="color:var(--accent2)">Nager.Date API</a>
+    </p>
+  {% else %}
+    <p style="color:var(--muted);font-size:13px;font-family:var(--mono);padding:24px 0">
+      Não foi possível carregar os feriados. Verifique sua conexão com a internet.
+    </p>
+  {% endif %}
+</div>
+
+<div class="card mt-24" style="border-color:rgba(124,111,255,.3)">
+  <div class="card-title">💡 Para que serve esta integração?</div>
+  <p style="font-size:13px;color:var(--muted);line-height:1.7;font-family:var(--mono)">
+    O EstudaFlow verifica automaticamente se o prazo de uma tarefa cai em um feriado nacional.
+    Quando isso acontece, um aviso <span class="badge badge-holiday">🎉 feriado</span> aparece
+    ao lado da tarefa, alertando o estudante para ajustar seu planejamento com antecedência.
+  </p>
+</div>
+{% endblock %}

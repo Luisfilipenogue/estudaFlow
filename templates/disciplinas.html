@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Disciplinas — EstudaFlow{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h2>Disciplinas</h2>
+  <p>Organize suas matérias de estudo</p>
+</div>
+
+<!-- Formulário -->
+<div class="card" style="margin-bottom:24px">
+  <div class="card-title">Nova Disciplina</div>
+  <div class="form-grid">
+    <div class="form-group">
+      <label>Nome *</label>
+      <input type="text" id="subj-name" placeholder="Ex: Matemática" />
+    </div>
+    <div class="form-group">
+      <label>Professor</label>
+      <input type="text" id="subj-teacher" placeholder="Ex: Prof. Ana" />
+    </div>
+    <div class="form-group">
+      <label>Cor</label>
+      <input type="color" id="subj-color" value="#7C6FFF" style="height:42px;cursor:pointer" />
+    </div>
+  </div>
+  <button class="btn btn-primary" onclick="addSubject()">+ Adicionar Disciplina</button>
+</div>
+
+<!-- Lista -->
+<div class="card">
+  <div class="card-title">Disciplinas Cadastradas</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Cor</th>
+          <th>Nome</th>
+          <th>Professor</th>
+          <th>Tarefas</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in subjects_with_count %}
+        {% set s = item.subject %}
+        {% set idx = loop.index0 %}
+        <tr>
+          <td>
+            <span style="display:inline-block;width:20px;height:20px;border-radius:50%;background:{{ s.color }}"></span>
+          </td>
+          <td style="font-weight:700">{{ s.name }}</td>
+          <td style="color:var(--muted)">{{ s.teacher or '—' }}</td>
+          <td style="font-family:var(--mono)">{{ item.count }}</td>
+          <td>
+            <button class="btn btn-danger btn-sm" onclick="deleteSubject({{ idx }})">✕ Remover</button>
+          </td>
+        </tr>
+        {% endfor %}
+        {% if not subjects_with_count %}
+        <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:32px;font-family:var(--mono)">
+          Nenhuma disciplina cadastrada ainda.
+        </td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function addSubject() {
+  const name = document.getElementById('subj-name').value.trim();
+  if (!name) { showToast('O nome é obrigatório.', '#F87171'); return; }
+  const body = {
+    name,
+    teacher: document.getElementById('subj-teacher').value.trim(),
+    color:   document.getElementById('subj-color').value,
+  };
+  const res = await api('POST', '/api/subjects', body);
+  if (res.ok) { showToast('Disciplina adicionada!', '#22D3A0'); location.reload(); }
+  else showToast(res.error, '#F87171');
+}
+
+async function deleteSubject(idx) {
+  if (!confirm('Remover esta disciplina?')) return;
+  const res = await api('DELETE', `/api/subjects/${idx}`);
+  if (res.ok) { showToast('Disciplina removida.', '#FBBF24'); location.reload(); }
+  else showToast(res.error, '#F87171');
+}
+</script>
+{% endblock %}
