@@ -7,7 +7,7 @@
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![Licença](https://img.shields.io/badge/licença-MIT-green)
 
-**🌐 Deploy:** https://estudaflow.onrender.com _(substituir pelo link real após deploy)_
+**🌐 Deploy:** https://estudaflow.onrender.com
 
 ---
 
