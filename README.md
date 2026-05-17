@@ -2,60 +2,71 @@
 
 > Organizador de estudos para estudantes com dificuldade de rotina
 
-![Build](https://github.com/SEU_USUARIO/estudaflow/actions/workflows/ci.yml/badge.svg)
-![Versão](https://img.shields.io/badge/versão-1.0.0-6C63FF)
+![Build](https://github.com/Luisfilipenogue/estudaFlow/actions/workflows/ci.yml/badge.svg)
+![Versão](https://img.shields.io/badge/versão-1.1.0-7C6FFF)
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![Licença](https://img.shields.io/badge/licença-MIT-green)
+
+**🌐 Deploy:** https://estudaflow.onrender.com _(substituir pelo link real após deploy)_
 
 ---
 
 ## 🎯 O Problema
 
-Muitos estudantes — especialmente os que conciliam trabalho, responsabilidades domésticas ou condições como TDAH e ansiedade — têm dificuldade em organizar suas tarefas acadêmicas. Sem um sistema de acompanhamento claro, prazos são esquecidos, disciplinas ficam desequilibradas e a sensação de descontrole prejudica o desempenho e o bem-estar.
+Muitos estudantes têm dificuldade em organizar suas tarefas acadêmicas, especialmente os que conciliam trabalho, responsabilidades domésticas ou condições como TDAH e ansiedade. Sem um sistema claro, prazos são esquecidos e disciplinas ficam desequilibradas.
 
 ## 💡 A Solução
 
-**EstudaFlow** é um organizador de estudos com interface gráfica (GUI) que permite ao estudante:
+**EstudaFlow** é um organizador de estudos com interface web que permite:
 
 - Cadastrar e gerenciar tarefas por disciplina
 - Definir prazos e prioridades
 - Marcar tarefas como concluídas
-- Visualizar um resumo de progresso com alertas de atraso
-- Organizar disciplinas com identificação por cor
+- Visualizar painel de progresso com alertas de atraso
+- **Consultar feriados nacionais brasileiros via API** e ser alertado quando um prazo cai em feriado
 
-Tudo salvo localmente em JSON — sem necessidade de conta, internet ou instalação complexa.
+---
+
+## ✨ Novidade v1.1.0 — Integração com API de Feriados
+
+O EstudaFlow agora consome a [**Nager.Date API**](https://date.nager.at) para listar os feriados nacionais do Brasil. Quando o prazo de uma tarefa coincide com um feriado, um aviso é exibido automaticamente — ajudando o estudante a replanejar com antecedência.
+
+**Endpoint utilizado:**
+```
+GET https://date.nager.at/api/v3/PublicHolidays/{year}/BR
+```
 
 ---
 
 ## 👥 Público-alvo
 
-- Estudantes do ensino médio e superior
-- Pessoas com dificuldade de organização de rotina
-- Estudantes que conciliam trabalho e faculdade
-- Pessoas neurodivergentes que se beneficiam de estrutura visual clara
+Estudantes do ensino médio e superior, especialmente os que conciliam trabalho, estudo e têm dificuldade de organização de rotina.
 
 ---
 
-## ✨ Funcionalidades Principais
+## ✨ Funcionalidades
 
 | Funcionalidade | Descrição |
 |---|---|
-| **Gerenciar tarefas** | Criar, concluir e remover tarefas de estudo |
+| **Gerenciar tarefas** | Criar, concluir e remover tarefas |
 | **Disciplinas** | Cadastrar matérias com professor e cor |
-| **Prazos e prioridades** | Definir data de entrega e nível de urgência |
-| **Resumo visual** | Painel com total, concluídas, pendentes e atrasadas |
-| **Persistência local** | Dados salvos em `~/.estudaflow/data.json` |
+| **Prazos e prioridades** | Data de entrega e urgência |
+| **Dashboard** | Painel com estatísticas gerais |
+| **Feriados BR** | Listagem e alerta automático via API |
+| **Persistência local** | Dados salvos em JSON |
 
 ---
 
-## 🛠 Tecnologias Utilizadas
+## 🛠 Tecnologias
 
 - **Python 3.11+**
-- **Tkinter** — GUI nativa (stdlib, sem instalação extra)
-- **JSON** — armazenamento local
-- **pytest** — testes automatizados
+- **Flask 3.0** — framework web
+- **Jinja2** — templates HTML
+- **Nager.Date API** — feriados brasileiros (sem autenticação)
+- **pytest** — testes (unitários + integração)
 - **Ruff** — linting e análise estática
-- **GitHub Actions** — integração contínua (CI)
+- **GitHub Actions** — CI/CD
+- **Render** — deploy em nuvem
 
 ---
 
@@ -65,148 +76,105 @@ Tudo salvo localmente em JSON — sem necessidade de conta, internet ou instala�
 estudaflow/
 ├── src/
 │   ├── __init__.py
-│   ├── app.py        # Interface gráfica (Tkinter)
-│   ├── models.py     # Modelos de dados (Task, Subject)
-│   └── storage.py    # Persistência em JSON
+│   ├── models.py      # Modelos Task e Subject
+│   ├── storage.py     # Persistência JSON
+│   └── holidays.py    # Integração API Nager.Date
+├── templates/
+│   ├── base.html
+│   ├── index.html     # Dashboard
+│   ├── tarefas.html
+│   ├── disciplinas.html
+│   └── feriados.html
 ├── tests/
-│   ├── __init__.py
-│   └── test_estudaflow.py   # 18 testes automatizados
-├── .github/
-│   └── workflows/
-│       └── ci.yml    # Pipeline GitHub Actions
-├── main.py           # Ponto de entrada
-├── pyproject.toml    # Manifesto, versão e configurações
-├── CHANGELOG.md
-├── CONTRIBUTING.md
-├── LICENSE
+│   ├── test_estudaflow.py   # Testes unitários (25)
+│   └── test_integration.py  # Testes de integração (20+)
+├── .github/workflows/ci.yml
+├── app.py             # Aplicação Flask
+├── pyproject.toml     # Versão 1.1.0 e config
+├── requirements.txt   # Flask + Gunicorn
+├── render.yaml        # Config deploy Render
 └── README.md
 ```
 
 ---
 
-## ⚙️ Instalação
-
-### Pré-requisitos
-
-- Python 3.11 ou superior
-- Tkinter (já incluso no Python padrão; no Linux pode ser necessário instalar)
+## ⚙️ Instalação e Execução Local
 
 ```bash
-# Linux (Ubuntu/Debian)
-sudo apt install python3-tk
-
-# macOS — já incluso no Python oficial
-# Windows — já incluso no Python oficial
-```
-
-### Clonando o repositório
-
-```bash
+# 1. Clone o repositório
 git clone https://github.com/Luisfilipenogue/estudaFlow.git
-cd estudaflow
+cd estudaFlow
+
+# 2. Crie e ative um ambiente virtual (recomendado)
+python -m venv .venv
+source .venv/bin/activate      # Linux/macOS
+.venv\Scripts\activate         # Windows
+
+# 3. Instale as dependências
+pip install -r requirements.txt
+
+# 4. Rode o servidor
+python app.py
 ```
 
-### Instalando dependências de desenvolvimento
-
-```bash
-pip install -e ".[dev]"
-```
-
-> As dependências de produção são **zero** — o EstudaFlow usa apenas a stdlib do Python.  
-> As dependências de desenvolvimento (`pytest`, `pytest-cov`, `ruff`) são instaladas com o comando acima.
-
----
-
-## ▶️ Execução
-
-```bash
-python main.py
-```
-
-A janela do EstudaFlow abrirá automaticamente.
+Acesse em: **http://localhost:5000**
 
 ---
 
 ## 🧪 Rodando os Testes
 
 ```bash
+pip install pytest pytest-cov
 pytest
 ```
 
-Para ver cobertura de código:
-
+Com cobertura:
 ```bash
 pytest --cov=src --cov-report=term-missing
 ```
-
-O projeto possui **18 testes automatizados** cobrindo:
-
-- Criação e serialização de modelos (`Task`, `Subject`)
-- Adição, remoção e alternância de tarefas
-- Validação de entradas inválidas (título vazio, índice fora do intervalo)
-- Filtros por disciplina e status
-- Persistência (salvar, carregar, arquivo corrompido, diretório inexistente)
 
 ---
 
 ## 🔍 Rodando o Lint
 
 ```bash
-ruff check src/ tests/
-```
-
-Para verificar formatação:
-
-```bash
-ruff format --check src/ tests/
-```
-
-Para corrigir automaticamente:
-
-```bash
-ruff format src/ tests/
+pip install ruff
+ruff check src/ tests/ app.py
+ruff format --check src/ tests/ app.py
 ```
 
 ---
 
-## 🔄 Pipeline de CI (GitHub Actions)
+## 🚀 Deploy no Render
 
-A cada `push` ou `pull request`, o GitHub Actions executa automaticamente:
+1. Faça fork/push do repositório para o GitHub
+2. Acesse [render.com](https://render.com) e crie uma conta gratuita
+3. Clique em **New → Web Service**
+4. Conecte seu repositório GitHub
+5. O Render detecta automaticamente o `render.yaml`
+6. Clique em **Deploy** — em alguns minutos o link estará disponível
+7. Cole o link no topo deste README
 
-1. Instalação do ambiente Python (3.11 e 3.12)
-2. Instalação das dependências de dev
+---
+
+## 🔄 Pipeline CI (GitHub Actions)
+
+A cada `push` ou `pull request` o GitHub Actions executa:
+
+1. Instalação do ambiente (Python 3.11 e 3.12)
+2. Instalação das dependências
 3. Lint com Ruff
-4. Verificação de formatação com Ruff
-5. Testes com `pytest` + cobertura
-
-Arquivo: [`.github/workflows/ci.yml`](.github/workflows/ci.yml)
+4. Verificação de formatação
+5. Testes unitários + integração com cobertura
 
 ---
 
 ## 📦 Versionamento
 
-Este projeto segue o padrão **Semantic Versioning** ([semver.org](https://semver.org)):
-
-```
-MAJOR.MINOR.PATCH
-```
-
-**Versão atual: `1.0.0`**
-
-Veja o histórico completo em [CHANGELOG.md](CHANGELOG.md).
-
----
-
-## 🖥️ Exemplo de Uso
-
-```
-1. Abra o app: python main.py
-2. Vá até a aba "Disciplinas" → cadastre suas matérias (ex: Matemática, Física)
-3. Vá até a aba "Tarefas" → adicione tarefas vinculadas às disciplinas
-4. Defina prazo e prioridade
-5. Conforme conclui, marque como ✔ Concluída
-6. Na aba "Resumo" acompanhe seu progresso e veja tarefas atrasadas
-```
+| Versão | O que mudou |
+|--------|-------------|
+| **1.1.0** | Conversão para Flask (web), integração API Nager.Date, testes de integração, deploy Render |
+| **1.0.0** | Versão desktop Tkinter, testes unitários, CI, lint |
 
 ---
 
@@ -220,4 +188,4 @@ Repositório: [https://github.com/Luisfilipenogue/estudaFlow](https://github.com
 
 ## 📄 Licença
 
-Este projeto está licenciado sob a [MIT License](LICENSE).
+[MIT License](LICENSE)

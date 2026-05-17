@@ -15,7 +15,6 @@ class Task:
     done: bool = False
 
     def to_dict(self) -> dict:
-        """Serializa a tarefa para dicionário."""
         return {
             "title": self.title,
             "subject": self.subject,
@@ -27,7 +26,6 @@ class Task:
 
     @classmethod
     def from_dict(cls, data: dict) -> "Task":
-        """Desserializa uma tarefa a partir de dicionário."""
         return cls(
             title=data.get("title", ""),
             subject=data.get("subject", ""),
@@ -47,7 +45,6 @@ class Subject:
     color: str = "#6C63FF"
 
     def to_dict(self) -> dict:
-        """Serializa a disciplina para dicionário."""
         return {
             "name": self.name,
             "teacher": self.teacher,
@@ -56,7 +53,6 @@ class Subject:
 
     @classmethod
     def from_dict(cls, data: dict) -> "Subject":
-        """Desserializa uma disciplina a partir de dicionário."""
         return cls(
             name=data.get("name", ""),
             teacher=data.get("teacher", ""),

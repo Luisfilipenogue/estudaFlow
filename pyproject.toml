@@ -4,13 +4,15 @@ build-backend = "setuptools.backends.legacy:build"
 
 [project]
 name = "estudaflow"
-version = "1.0.0"
+version = "1.1.0"
 description = "Organizador de estudos para estudantes com dificuldade de rotina"
 readme = "README.md"
 license = { text = "MIT" }
-authors = [{ name = "Seu Nome", email = "seuemail@exemplo.com" }]
+authors = [{ name = "Luis Filipe Nogueira de Moraes Araujo" }]
 requires-python = ">=3.11"
-dependencies = []  # tkinter é parte da stdlib
+dependencies = [
+    "flask>=3.0",
+]
 
 [project.optional-dependencies]
 dev = [
@@ -20,7 +22,7 @@ dev = [
 ]
 
 [project.scripts]
-estudaflow = "src.app:main"
+estudaflow = "app:main"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -39,7 +41,6 @@ ignore = ["E501"]
 
 [tool.coverage.run]
 source = ["src"]
-omit = ["src/app.py"]   # GUI — não testado com headless
 
 [tool.coverage.report]
 show_missing = true
