@@ -1,6 +1,6 @@
 """Modelos de dados do EstudaFlow."""
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 @dataclass
