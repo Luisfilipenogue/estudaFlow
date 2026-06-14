@@ -1,25 +1,20 @@
-"""EstudaFlow — aplicação Flask."""
+"""EstudaFlow — aplicação Flask com Supabase."""
 
-from flask import Flask, render_template, request, jsonify, redirect, url_for
-from pathlib import Path
+from flask import Flask, render_template, request, jsonify
 from datetime import date
 
-from src.models import Task, Subject
-from src.storage import Storage
+from src.database import (
+    get_tasks, add_task, toggle_task, delete_task,
+    get_subjects, add_subject, delete_subject,
+)
 from src.holidays import fetch_holidays, format_holidays, get_upcoming_holidays, is_holiday
 
-DATA_FILE = Path("data.json")
-
 app = Flask(__name__)
-storage = Storage(DATA_FILE)
-storage.load()
 
-# Cache de feriados em memória (evita chamadas repetidas)
 _holidays_cache: dict[int, list[dict]] = {}
 
 
 def _get_holidays(year: int | None = None) -> list[dict]:
-    """Retorna feriados formatados, usando cache."""
     y = year or date.today().year
     if y not in _holidays_cache:
         raw = fetch_holidays(y)
@@ -27,24 +22,29 @@ def _get_holidays(year: int | None = None) -> list[dict]:
     return _holidays_cache[y]
 
 
-# ─────────────────────────────────────────────── páginas ──────────────────────
+# ─────────────────────────────────────── páginas ──────────────────────────────
 
 @app.route("/")
 def index():
+    try:
+        tasks = get_tasks()
+        subjects = get_subjects()
+    except Exception:
+        tasks, subjects = [], []
+
     holidays = _get_holidays()
     upcoming = get_upcoming_holidays(holidays, limit=5)
-    tasks = storage.tasks
     total = len(tasks)
-    done = sum(1 for t in tasks if t.done)
+    done = sum(1 for t in tasks if t.get("done"))
     pending = total - done
     overdue = sum(
         1 for t in tasks
-        if not t.done and t.due and t.due < date.today().isoformat()
+        if not t.get("done") and t.get("due") and t["due"] < date.today().isoformat()
     )
     return render_template(
         "index.html",
         tasks=tasks,
-        subjects=storage.subjects,
+        subjects=subjects,
         upcoming_holidays=upcoming,
         total=total,
         done=done,
@@ -56,24 +56,32 @@ def index():
 
 @app.route("/tarefas")
 def tarefas():
+    try:
+        tasks = get_tasks()
+        subjects = get_subjects()
+    except Exception:
+        tasks, subjects = [], []
+
     holidays = _get_holidays()
-    tasks_with_flag = []
-    for t in storage.tasks:
-        flag = is_holiday(t.due, holidays) if t.due else False
-        tasks_with_flag.append({"task": t, "is_holiday": flag})
-    return render_template(
-        "tarefas.html",
-        tasks_with_flag=tasks_with_flag,
-        subjects=storage.subjects,
-    )
+    tasks_with_flag = [
+        {"task": t, "is_holiday": is_holiday(t.get("due", ""), holidays)}
+        for t in tasks
+    ]
+    return render_template("tarefas.html", tasks_with_flag=tasks_with_flag, subjects=subjects)
 
 
 @app.route("/disciplinas")
 def disciplinas():
-    subjects_with_count = []
-    for s in storage.subjects:
-        count = sum(1 for t in storage.tasks if t.subject == s.name)
-        subjects_with_count.append({"subject": s, "count": count})
+    try:
+        subjects = get_subjects()
+        tasks = get_tasks()
+    except Exception:
+        subjects, tasks = [], []
+
+    subjects_with_count = [
+        {"subject": s, "count": sum(1 for t in tasks if t.get("subject") == s["name"])}
+        for s in subjects
+    ]
     return render_template("disciplinas.html", subjects_with_count=subjects_with_count)
 
 
@@ -84,87 +92,87 @@ def feriados():
     return render_template("feriados.html", holidays=holidays, year=year)
 
 
-# ─────────────────────────────────────────────── API JSON ─────────────────────
+# ─────────────────────────────────────── API JSON ─────────────────────────────
 
 @app.route("/api/tasks", methods=["GET"])
 def api_get_tasks():
-    return jsonify([t.to_dict() for t in storage.tasks])
+    return jsonify(get_tasks())
 
 
 @app.route("/api/tasks", methods=["POST"])
 def api_add_task():
     data = request.get_json(force=True)
     try:
-        task = Task(
+        task = add_task(
             title=data.get("title", ""),
             subject=data.get("subject", ""),
             due=data.get("due") or None,
             priority=data.get("priority", "Média"),
             notes=data.get("notes", ""),
         )
-        storage.add_task(task)
-        storage.save()
-        return jsonify({"ok": True, "task": task.to_dict()}), 201
+        return jsonify({"ok": True, "task": task}), 201
     except ValueError as e:
         return jsonify({"ok": False, "error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
 
 
-@app.route("/api/tasks/<int:idx>/toggle", methods=["POST"])
-def api_toggle_task(idx: int):
+@app.route("/api/tasks/<int:task_id>/toggle", methods=["POST"])
+def api_toggle_task(task_id: int):
     try:
-        storage.toggle_task(idx)
-        storage.save()
-        return jsonify({"ok": True, "done": storage.tasks[idx].done})
-    except IndexError as e:
-        return jsonify({"ok": False, "error": str(e)}), 404
+        tasks = get_tasks()
+        task = next((t for t in tasks if t["id"] == task_id), None)
+        if not task:
+            return jsonify({"ok": False, "error": "Tarefa não encontrada."}), 404
+        updated = toggle_task(task_id, task["done"])
+        return jsonify({"ok": True, "done": updated.get("done")})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
 
 
-@app.route("/api/tasks/<int:idx>", methods=["DELETE"])
-def api_delete_task(idx: int):
+@app.route("/api/tasks/<int:task_id>", methods=["DELETE"])
+def api_delete_task(task_id: int):
     try:
-        storage.remove_task(idx)
-        storage.save()
+        delete_task(task_id)
         return jsonify({"ok": True})
-    except IndexError as e:
-        return jsonify({"ok": False, "error": str(e)}), 404
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
 
 
 @app.route("/api/subjects", methods=["GET"])
 def api_get_subjects():
-    return jsonify([s.to_dict() for s in storage.subjects])
+    return jsonify(get_subjects())
 
 
 @app.route("/api/subjects", methods=["POST"])
 def api_add_subject():
     data = request.get_json(force=True)
     try:
-        subj = Subject(
+        subj = add_subject(
             name=data.get("name", ""),
             teacher=data.get("teacher", ""),
             color=data.get("color", "#6C63FF"),
         )
-        storage.add_subject(subj)
-        storage.save()
-        return jsonify({"ok": True, "subject": subj.to_dict()}), 201
+        return jsonify({"ok": True, "subject": subj}), 201
     except ValueError as e:
         return jsonify({"ok": False, "error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
 
 
-@app.route("/api/subjects/<int:idx>", methods=["DELETE"])
-def api_delete_subject(idx: int):
+@app.route("/api/subjects/<int:subject_id>", methods=["DELETE"])
+def api_delete_subject(subject_id: int):
     try:
-        storage.remove_subject(idx)
-        storage.save()
+        delete_subject(subject_id)
         return jsonify({"ok": True})
-    except IndexError as e:
-        return jsonify({"ok": False, "error": str(e)}), 404
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
 
 
 @app.route("/api/holidays")
 def api_holidays():
     year = request.args.get("year", date.today().year, type=int)
-    holidays = _get_holidays(year)
-    return jsonify(holidays)
+    return jsonify(_get_holidays(year))
 
 
 if __name__ == "__main__":

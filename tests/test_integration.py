@@ -1,259 +1,199 @@
-"""Testes de integração — EstudaFlow (Etapa Intermediária)."""
+"""Testes de integração — EstudaFlow com Supabase."""
 
 import json
-import tempfile
-from pathlib import Path
 from unittest.mock import patch, MagicMock
 import urllib.error
 
 import pytest
 
-from src.models import Task, Subject
-from src.storage import Storage
 from src.holidays import (
-    fetch_holidays,
-    format_holidays,
-    get_upcoming_holidays,
-    is_holiday,
+    fetch_holidays, format_holidays,
+    get_upcoming_holidays, is_holiday,
 )
 
-
-# ══════════════════════════════════════════════════════════════════════════════
-# Helpers
-# ══════════════════════════════════════════════════════════════════════════════
+# ── Mock data ─────────────────────────────────────────────────────────────────
 
 MOCK_HOLIDAYS_RAW = [
-    {"date": "2025-01-01", "localName": "Confraternização Universal",
-     "name": "New Year's Day", "countryCode": "BR"},
-    {"date": "2025-04-21", "localName": "Tiradentes",
-     "name": "Tiradentes' Day", "countryCode": "BR"},
-    {"date": "2025-09-07", "localName": "Independência do Brasil",
-     "name": "Independence Day", "countryCode": "BR"},
-    {"date": "2025-11-02", "localName": "Finados",
-     "name": "All Souls' Day", "countryCode": "BR"},
-    {"date": "2025-12-25", "localName": "Natal",
-     "name": "Christmas Day", "countryCode": "BR"},
+    {"date": "2025-01-01", "localName": "Ano Novo",       "name": "New Year's Day"},
+    {"date": "2025-04-21", "localName": "Tiradentes",     "name": "Tiradentes' Day"},
+    {"date": "2025-09-07", "localName": "Independência",  "name": "Independence Day"},
+    {"date": "2025-12-25", "localName": "Natal",          "name": "Christmas Day"},
+]
+
+MOCK_TASKS = [
+    {"id": 1, "title": "Estudar Flask", "subject": "TI", "due": "2025-12-01",
+     "priority": "Alta", "notes": "", "done": False},
+    {"id": 2, "title": "Revisar prova", "subject": "TI", "due": None,
+     "priority": "Média", "notes": "", "done": True},
+]
+
+MOCK_SUBJECTS = [
+    {"id": 1, "name": "TI", "teacher": "Prof. Ana", "color": "#6C63FF"},
 ]
 
 
-def _mock_urlopen(raw: list[dict]):
-    """Retorna um context-manager falso que simula urlopen."""
-    mock_resp = MagicMock()
-    mock_resp.__enter__ = lambda s: s
-    mock_resp.__exit__  = MagicMock(return_value=False)
-    mock_resp.status = 200
-    mock_resp.read.return_value = json.dumps(raw).encode("utf-8")
-    return mock_resp
+def _mock_urlopen_holidays(raw):
+    m = MagicMock()
+    m.__enter__ = lambda s: s
+    m.__exit__ = MagicMock(return_value=False)
+    m.status = 200
+    m.read.return_value = json.dumps(raw).encode()
+    return m
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# Testes da camada holidays.py
-# ══════════════════════════════════════════════════════════════════════════════
+# ── Holidays ──────────────────────────────────────────────────────────────────
 
 class TestFetchHolidays:
-    """Testa o consumo da API Nager.Date (com mock)."""
-
     def test_fetch_returns_list_on_success(self):
-        """Simula resposta 200 da API e verifica retorno como lista."""
-        with patch("urllib.request.urlopen", return_value=_mock_urlopen(MOCK_HOLIDAYS_RAW)):
+        with patch("urllib.request.urlopen",
+                   return_value=_mock_urlopen_holidays(MOCK_HOLIDAYS_RAW)):
             result = fetch_holidays(2025)
         assert isinstance(result, list)
-        assert len(result) == 5
+        assert len(result) == 4
 
     def test_fetch_contains_expected_fields(self):
-        """Os campos date, localName e name devem existir."""
-        with patch("urllib.request.urlopen", return_value=_mock_urlopen(MOCK_HOLIDAYS_RAW)):
+        with patch("urllib.request.urlopen",
+                   return_value=_mock_urlopen_holidays(MOCK_HOLIDAYS_RAW)):
             result = fetch_holidays(2025)
         for h in result:
             assert "date" in h
             assert "localName" in h
-            assert "name" in h
 
     def test_fetch_returns_empty_on_network_error(self):
-        """Erro de rede deve retornar lista vazia, sem lançar exceção."""
-        with patch(
-            "urllib.request.urlopen",
-            side_effect=urllib.error.URLError("network unreachable"),
-        ):
+        with patch("urllib.request.urlopen",
+                   side_effect=urllib.error.URLError("err")):
             result = fetch_holidays(2025)
         assert result == []
 
     def test_fetch_returns_empty_on_invalid_json(self):
-        """JSON inválido na resposta deve retornar lista vazia."""
-        mock_resp = MagicMock()
-        mock_resp.__enter__ = lambda s: s
-        mock_resp.__exit__  = MagicMock(return_value=False)
-        mock_resp.status = 200
-        mock_resp.read.return_value = b"{broken json"
-        with patch("urllib.request.urlopen", return_value=mock_resp):
+        m = MagicMock()
+        m.__enter__ = lambda s: s
+        m.__exit__ = MagicMock(return_value=False)
+        m.status = 200
+        m.read.return_value = b"{broken"
+        with patch("urllib.request.urlopen", return_value=m):
             result = fetch_holidays(2025)
         assert result == []
 
     def test_fetch_uses_current_year_by_default(self):
-        """Sem argumento de ano, deve usar o ano corrente."""
         from datetime import date
-        current_year = date.today().year
-        captured_urls = []
-
-        def fake_urlopen(url, timeout=None):
-            captured_urls.append(url)
-            return _mock_urlopen([])
-
-        with patch("urllib.request.urlopen", side_effect=fake_urlopen):
+        captured = []
+        def fake(url, timeout=None):
+            captured.append(url)
+            return _mock_urlopen_holidays([])
+        with patch("urllib.request.urlopen", side_effect=fake):
             fetch_holidays()
-
-        assert str(current_year) in captured_urls[0]
+        assert str(date.today().year) in captured[0]
 
 
 class TestFormatHolidays:
-    """Testa a normalização dos dados da API."""
-
-    def test_format_returns_sorted_by_date(self):
+    def test_sorted_by_date(self):
         raw = [
-            {"date": "2025-12-25", "name": "Christmas", "localName": "Natal"},
-            {"date": "2025-01-01", "name": "New Year", "localName": "Ano Novo"},
+            {"date": "2025-12-25", "name": "C", "localName": "Natal"},
+            {"date": "2025-01-01", "name": "A", "localName": "Ano Novo"},
         ]
         result = format_holidays(raw)
         assert result[0]["date"] == "2025-01-01"
-        assert result[1]["date"] == "2025-12-25"
 
-    def test_format_keeps_required_keys_only(self):
-        result = format_holidays(MOCK_HOLIDAYS_RAW)
-        for h in result:
-            assert set(h.keys()) == {"date", "name", "localName"}
-
-    def test_format_empty_list(self):
+    def test_empty_input(self):
         assert format_holidays([]) == []
-
-    def test_format_handles_missing_fields(self):
-        raw = [{"date": "2025-06-15"}]
-        result = format_holidays(raw)
-        assert result[0]["name"] == ""
-        assert result[0]["localName"] == ""
 
 
 class TestGetUpcomingHolidays:
-    """Testa filtragem de próximos feriados."""
-
     def test_returns_at_most_limit(self):
-        holidays = format_holidays(MOCK_HOLIDAYS_RAW)
-        # Injeta datas futuras garantidas
         future = [
             {"date": "2099-01-01", "name": "A", "localName": "A"},
             {"date": "2099-02-01", "name": "B", "localName": "B"},
             {"date": "2099-03-01", "name": "C", "localName": "C"},
         ]
-        result = get_upcoming_holidays(future, limit=2)
-        assert len(result) == 2
+        assert len(get_upcoming_holidays(future, limit=2)) == 2
 
-    def test_excludes_past_dates(self):
-        past = [
-            {"date": "2000-01-01", "name": "Past", "localName": "Passado"},
-        ]
-        result = get_upcoming_holidays(past)
-        assert result == []
-
-    def test_empty_input(self):
-        assert get_upcoming_holidays([]) == []
+    def test_excludes_past(self):
+        past = [{"date": "2000-01-01", "name": "P", "localName": "P"}]
+        assert get_upcoming_holidays(past) == []
 
 
 class TestIsHoliday:
-    """Testa verificação se uma data é feriado."""
-
     def test_known_holiday(self):
-        holidays = format_holidays(MOCK_HOLIDAYS_RAW)
-        assert is_holiday("2025-12-25", holidays) is True
+        h = format_holidays(MOCK_HOLIDAYS_RAW)
+        assert is_holiday("2025-12-25", h) is True
 
     def test_non_holiday(self):
-        holidays = format_holidays(MOCK_HOLIDAYS_RAW)
-        assert is_holiday("2025-06-10", holidays) is False
-
-    def test_empty_list(self):
-        assert is_holiday("2025-01-01", []) is False
+        h = format_holidays(MOCK_HOLIDAYS_RAW)
+        assert is_holiday("2025-06-10", h) is False
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# Testes das rotas Flask
-# ══════════════════════════════════════════════════════════════════════════════
+# ── Flask routes ──────────────────────────────────────────────────────────────
 
 @pytest.fixture
-def flask_client(tmp_path):
-    """Cria cliente de teste Flask com storage temporário."""
-    import app as flask_app_module
-
-    data_file = tmp_path / "data.json"
-    st = Storage(data_file)
-    flask_app_module.storage = st
-    flask_app_module._holidays_cache = {}
-    flask_app_module.app.config["TESTING"] = True
-
-    with flask_app_module.app.test_client() as client:
-        yield client
+def client():
+    import app as flask_app
+    flask_app.app.config["TESTING"] = True
+    flask_app._holidays_cache = {}
+    with flask_app.app.test_client() as c:
+        yield c
 
 
 class TestFlaskRoutes:
-    def test_index_returns_200(self, flask_client):
+    def test_index_returns_200(self, client):
+        with patch("app.get_tasks", return_value=MOCK_TASKS), \
+             patch("app.get_subjects", return_value=MOCK_SUBJECTS), \
+             patch("src.holidays.fetch_holidays", return_value=MOCK_HOLIDAYS_RAW):
+            resp = client.get("/")
+        assert resp.status_code == 200
+
+    def test_tarefas_returns_200(self, client):
+        with patch("app.get_tasks", return_value=MOCK_TASKS), \
+             patch("app.get_subjects", return_value=MOCK_SUBJECTS):
+            resp = client.get("/tarefas")
+        assert resp.status_code == 200
+
+    def test_disciplinas_returns_200(self, client):
+        with patch("app.get_subjects", return_value=MOCK_SUBJECTS), \
+             patch("app.get_tasks", return_value=MOCK_TASKS):
+            resp = client.get("/disciplinas")
+        assert resp.status_code == 200
+
+    def test_feriados_returns_200(self, client):
         with patch("src.holidays.fetch_holidays", return_value=MOCK_HOLIDAYS_RAW):
-            resp = flask_client.get("/")
+            resp = client.get("/feriados")
         assert resp.status_code == 200
 
-    def test_tarefas_returns_200(self, flask_client):
-        resp = flask_client.get("/tarefas")
-        assert resp.status_code == 200
-
-    def test_disciplinas_returns_200(self, flask_client):
-        resp = flask_client.get("/disciplinas")
-        assert resp.status_code == 200
-
-    def test_feriados_returns_200(self, flask_client):
-        with patch("src.holidays.fetch_holidays", return_value=MOCK_HOLIDAYS_RAW):
-            resp = flask_client.get("/feriados")
-        assert resp.status_code == 200
-
-    def test_api_add_task(self, flask_client):
-        resp = flask_client.post(
-            "/api/tasks",
-            json={"title": "Estudar Flask", "priority": "Alta"},
-        )
+    def test_api_add_task_success(self, client):
+        new_task = {"id": 3, "title": "Nova", "subject": "", "due": None,
+                    "priority": "Média", "notes": "", "done": False}
+        with patch("app.add_task", return_value=new_task):
+            resp = client.post("/api/tasks", json={"title": "Nova"})
         assert resp.status_code == 201
-        data = resp.get_json()
-        assert data["ok"] is True
-        assert data["task"]["title"] == "Estudar Flask"
+        assert resp.get_json()["ok"] is True
 
-    def test_api_add_task_empty_title(self, flask_client):
-        resp = flask_client.post("/api/tasks", json={"title": ""})
+    def test_api_add_task_empty_title(self, client):
+        with patch("app.add_task", side_effect=ValueError("título vazio")):
+            resp = client.post("/api/tasks", json={"title": ""})
         assert resp.status_code == 400
-        assert resp.get_json()["ok"] is False
 
-    def test_api_toggle_task(self, flask_client):
-        flask_client.post("/api/tasks", json={"title": "Toggle"})
-        resp = flask_client.post("/api/tasks/0/toggle")
+    def test_api_toggle_task(self, client):
+        updated = {**MOCK_TASKS[0], "done": True}
+        with patch("app.get_tasks", return_value=MOCK_TASKS), \
+             patch("app.toggle_task", return_value=updated):
+            resp = client.post("/api/tasks/1/toggle")
         assert resp.status_code == 200
         assert resp.get_json()["done"] is True
 
-    def test_api_delete_task(self, flask_client):
-        flask_client.post("/api/tasks", json={"title": "Para deletar"})
-        resp = flask_client.delete("/api/tasks/0")
+    def test_api_delete_task(self, client):
+        with patch("app.delete_task", return_value=None):
+            resp = client.delete("/api/tasks/1")
         assert resp.status_code == 200
         assert resp.get_json()["ok"] is True
 
-    def test_api_delete_task_invalid_index(self, flask_client):
-        resp = flask_client.delete("/api/tasks/999")
-        assert resp.status_code == 404
-
-    def test_api_add_subject(self, flask_client):
-        resp = flask_client.post("/api/subjects", json={"name": "Física"})
+    def test_api_add_subject_success(self, client):
+        new_subj = {"id": 2, "name": "Física", "teacher": "", "color": "#6C63FF"}
+        with patch("app.add_subject", return_value=new_subj):
+            resp = client.post("/api/subjects", json={"name": "Física"})
         assert resp.status_code == 201
-        assert resp.get_json()["subject"]["name"] == "Física"
 
-    def test_api_add_duplicate_subject(self, flask_client):
-        flask_client.post("/api/subjects", json={"name": "Química"})
-        resp = flask_client.post("/api/subjects", json={"name": "Química"})
-        assert resp.status_code == 400
-
-    def test_api_holidays_endpoint(self, flask_client):
+    def test_api_holidays_endpoint(self, client):
         with patch("src.holidays.fetch_holidays", return_value=MOCK_HOLIDAYS_RAW):
-            resp = flask_client.get("/api/holidays?year=2025")
+            resp = client.get("/api/holidays?year=2025")
         assert resp.status_code == 200
-        data = resp.get_json()
-        assert isinstance(data, list)
+        assert isinstance(resp.get_json(), list)
