@@ -149,17 +149,19 @@ class EstudaFlowApp:
             form, text="Nova Tarefa", bg="#1A1D2E", fg="#6C63FF", font=("Georgia", 13, "bold")
         ).grid(row=0, column=0, columnspan=6, sticky="w", pady=(0, 10))
 
-        lbl = lambda t: tk.Label(form, text=t, bg="#1A1D2E", fg="#94A3B8", font=("Courier New", 9))
-        ent = lambda w=22: tk.Entry(
-            form,
-            width=w,
-            bg="#252840",
-            fg="#E2E8F0",
-            insertbackground="#E2E8F0",
-            font=("Courier New", 10),
-            relief="flat",
-            bd=4,
-        )
+        def lbl(t):
+            return tk.Label(form, text=t, bg="#1A1D2E", fg="#94A3B8", font=("Courier New", 9))
+        def ent(w=22):
+            return tk.Entry(
+                    form,
+                    width=w,
+                    bg="#252840",
+                    fg="#E2E8F0",
+                    insertbackground="#E2E8F0",
+                    font=("Courier New", 10),
+                    relief="flat",
+                    bd=4,
+                )
 
         lbl("Título *").grid(row=1, column=0, sticky="w")
         self.task_title = ent(26)
@@ -237,17 +239,19 @@ class EstudaFlowApp:
             form, text="Nova Disciplina", bg="#1A1D2E", fg="#6C63FF", font=("Georgia", 13, "bold")
         ).grid(row=0, column=0, columnspan=4, sticky="w", pady=(0, 10))
 
-        lbl = lambda t: tk.Label(form, text=t, bg="#1A1D2E", fg="#94A3B8", font=("Courier New", 9))
-        ent = lambda w=22: tk.Entry(
-            form,
-            width=w,
-            bg="#252840",
-            fg="#E2E8F0",
-            insertbackground="#E2E8F0",
-            font=("Courier New", 10),
-            relief="flat",
-            bd=4,
-        )
+        def lbl(t):
+            return tk.Label(form, text=t, bg="#1A1D2E", fg="#94A3B8", font=("Courier New", 9))
+        def ent(w=22):
+            return tk.Entry(
+                    form,
+                    width=w,
+                    bg="#252840",
+                    fg="#E2E8F0",
+                    insertbackground="#E2E8F0",
+                    font=("Courier New", 10),
+                    relief="flat",
+                    bd=4,
+                )
 
         lbl("Nome *").grid(row=1, column=0, sticky="w")
         self.subj_name = ent()
