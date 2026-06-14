@@ -1,30 +1,46 @@
 """Testes de integração — EstudaFlow com Supabase."""
 
 import json
-from unittest.mock import patch, MagicMock
 import urllib.error
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from src.holidays import (
-    fetch_holidays, format_holidays,
-    get_upcoming_holidays, is_holiday,
+    fetch_holidays,
+    format_holidays,
+    get_upcoming_holidays,
+    is_holiday,
 )
 
 # ── Mock data ─────────────────────────────────────────────────────────────────
 
 MOCK_HOLIDAYS_RAW = [
-    {"date": "2025-01-01", "localName": "Ano Novo",       "name": "New Year's Day"},
-    {"date": "2025-04-21", "localName": "Tiradentes",     "name": "Tiradentes' Day"},
-    {"date": "2025-09-07", "localName": "Independência",  "name": "Independence Day"},
-    {"date": "2025-12-25", "localName": "Natal",          "name": "Christmas Day"},
+    {"date": "2025-01-01", "localName": "Ano Novo", "name": "New Year's Day"},
+    {"date": "2025-04-21", "localName": "Tiradentes", "name": "Tiradentes' Day"},
+    {"date": "2025-09-07", "localName": "Independência", "name": "Independence Day"},
+    {"date": "2025-12-25", "localName": "Natal", "name": "Christmas Day"},
 ]
 
 MOCK_TASKS = [
-    {"id": 1, "title": "Estudar Flask", "subject": "TI", "due": "2025-12-01",
-     "priority": "Alta", "notes": "", "done": False},
-    {"id": 2, "title": "Revisar prova", "subject": "TI", "due": None,
-     "priority": "Média", "notes": "", "done": True},
+    {
+        "id": 1,
+        "title": "Estudar Flask",
+        "subject": "TI",
+        "due": "2025-12-01",
+        "priority": "Alta",
+        "notes": "",
+        "done": False,
+    },
+    {
+        "id": 2,
+        "title": "Revisar prova",
+        "subject": "TI",
+        "due": None,
+        "priority": "Média",
+        "notes": "",
+        "done": True,
+    },
 ]
 
 MOCK_SUBJECTS = [
@@ -43,25 +59,27 @@ def _mock_urlopen_holidays(raw):
 
 # ── Holidays ──────────────────────────────────────────────────────────────────
 
+
 class TestFetchHolidays:
     def test_fetch_returns_list_on_success(self):
-        with patch("urllib.request.urlopen",
-                   return_value=_mock_urlopen_holidays(MOCK_HOLIDAYS_RAW)):
+        with patch(
+            "urllib.request.urlopen", return_value=_mock_urlopen_holidays(MOCK_HOLIDAYS_RAW)
+        ):
             result = fetch_holidays(2025)
         assert isinstance(result, list)
         assert len(result) == 4
 
     def test_fetch_contains_expected_fields(self):
-        with patch("urllib.request.urlopen",
-                   return_value=_mock_urlopen_holidays(MOCK_HOLIDAYS_RAW)):
+        with patch(
+            "urllib.request.urlopen", return_value=_mock_urlopen_holidays(MOCK_HOLIDAYS_RAW)
+        ):
             result = fetch_holidays(2025)
         for h in result:
             assert "date" in h
             assert "localName" in h
 
     def test_fetch_returns_empty_on_network_error(self):
-        with patch("urllib.request.urlopen",
-                   side_effect=urllib.error.URLError("err")):
+        with patch("urllib.request.urlopen", side_effect=urllib.error.URLError("err")):
             result = fetch_holidays(2025)
         assert result == []
 
@@ -77,10 +95,13 @@ class TestFetchHolidays:
 
     def test_fetch_uses_current_year_by_default(self):
         from datetime import date
+
         captured = []
+
         def fake(url, timeout=None):
             captured.append(url)
             return _mock_urlopen_holidays([])
+
         with patch("urllib.request.urlopen", side_effect=fake):
             fetch_holidays()
         assert str(date.today().year) in captured[0]
@@ -125,9 +146,11 @@ class TestIsHoliday:
 
 # ── Flask routes ──────────────────────────────────────────────────────────────
 
+
 @pytest.fixture
 def client():
     import app as flask_app
+
     flask_app.app.config["TESTING"] = True
     flask_app._holidays_cache = {}
     with flask_app.app.test_client() as c:
@@ -136,21 +159,27 @@ def client():
 
 class TestFlaskRoutes:
     def test_index_returns_200(self, client):
-        with patch("app.get_tasks", return_value=MOCK_TASKS), \
-             patch("app.get_subjects", return_value=MOCK_SUBJECTS), \
-             patch("src.holidays.fetch_holidays", return_value=MOCK_HOLIDAYS_RAW):
+        with (
+            patch("app.get_tasks", return_value=MOCK_TASKS),
+            patch("app.get_subjects", return_value=MOCK_SUBJECTS),
+            patch("src.holidays.fetch_holidays", return_value=MOCK_HOLIDAYS_RAW),
+        ):
             resp = client.get("/")
         assert resp.status_code == 200
 
     def test_tarefas_returns_200(self, client):
-        with patch("app.get_tasks", return_value=MOCK_TASKS), \
-             patch("app.get_subjects", return_value=MOCK_SUBJECTS):
+        with (
+            patch("app.get_tasks", return_value=MOCK_TASKS),
+            patch("app.get_subjects", return_value=MOCK_SUBJECTS),
+        ):
             resp = client.get("/tarefas")
         assert resp.status_code == 200
 
     def test_disciplinas_returns_200(self, client):
-        with patch("app.get_subjects", return_value=MOCK_SUBJECTS), \
-             patch("app.get_tasks", return_value=MOCK_TASKS):
+        with (
+            patch("app.get_subjects", return_value=MOCK_SUBJECTS),
+            patch("app.get_tasks", return_value=MOCK_TASKS),
+        ):
             resp = client.get("/disciplinas")
         assert resp.status_code == 200
 
@@ -160,8 +189,15 @@ class TestFlaskRoutes:
         assert resp.status_code == 200
 
     def test_api_add_task_success(self, client):
-        new_task = {"id": 3, "title": "Nova", "subject": "", "due": None,
-                    "priority": "Média", "notes": "", "done": False}
+        new_task = {
+            "id": 3,
+            "title": "Nova",
+            "subject": "",
+            "due": None,
+            "priority": "Média",
+            "notes": "",
+            "done": False,
+        }
         with patch("app.add_task", return_value=new_task):
             resp = client.post("/api/tasks", json={"title": "Nova"})
         assert resp.status_code == 201
@@ -174,8 +210,10 @@ class TestFlaskRoutes:
 
     def test_api_toggle_task(self, client):
         updated = {**MOCK_TASKS[0], "done": True}
-        with patch("app.get_tasks", return_value=MOCK_TASKS), \
-             patch("app.toggle_task", return_value=updated):
+        with (
+            patch("app.get_tasks", return_value=MOCK_TASKS),
+            patch("app.toggle_task", return_value=updated),
+        ):
             resp = client.post("/api/tasks/1/toggle")
         assert resp.status_code == 200
         assert resp.get_json()["done"] is True

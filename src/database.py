@@ -1,9 +1,9 @@
 """Camada de persistência do EstudaFlow usando Supabase."""
 
-import os
-import urllib.request
-import urllib.error
 import json
+import os
+import urllib.error
+import urllib.request
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://cuidrohiptvgcvzljtjy.supabase.co")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "sb_publishable_VK-v87zlbIOemszpXupv1g_MaICkmqi")
@@ -32,23 +32,30 @@ def _request(method: str, path: str, body: dict | None = None) -> list | dict:
 
 # ─────────────────────────────────────── tasks ────────────────────────────────
 
+
 def get_tasks() -> list[dict]:
     return _request("GET", "tasks?order=id.asc")
 
 
-def add_task(title: str, subject: str = "", due: str | None = None,
-             priority: str = "Média", notes: str = "") -> dict:
+def add_task(
+    title: str, subject: str = "", due: str | None = None, priority: str = "Média", notes: str = ""
+) -> dict:
     if not title.strip():
         raise ValueError("O título da tarefa não pode ser vazio.")
-    body = {"title": title, "subject": subject, "due": due,
-            "priority": priority, "notes": notes, "done": False}
+    body = {
+        "title": title,
+        "subject": subject,
+        "due": due,
+        "priority": priority,
+        "notes": notes,
+        "done": False,
+    }
     result = _request("POST", "tasks", body)
     return result[0] if isinstance(result, list) else result
 
 
 def toggle_task(task_id: int, current_done: bool) -> dict:
-    result = _request("PATCH", f"tasks?id=eq.{task_id}",
-                      {"done": not current_done})
+    result = _request("PATCH", f"tasks?id=eq.{task_id}", {"done": not current_done})
     return result[0] if isinstance(result, list) else result
 
 
@@ -57,6 +64,7 @@ def delete_task(task_id: int) -> None:
 
 
 # ─────────────────────────────────────── subjects ─────────────────────────────
+
 
 def get_subjects() -> list[dict]:
     return _request("GET", "subjects?order=id.asc")

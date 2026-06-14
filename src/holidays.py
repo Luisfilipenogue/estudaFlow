@@ -1,8 +1,8 @@
 """Integração com a API Nager.Date — feriados brasileiros."""
 
-import urllib.request
-import urllib.error
 import json
+import urllib.error
+import urllib.request
 from datetime import date
 
 NAGER_BASE_URL = "https://date.nager.at/api/v3"
@@ -23,8 +23,7 @@ def fetch_holidays(year: int | None = None) -> list[dict]:
 
 def format_holidays(holidays: list[dict]) -> list[dict]:
     result = [
-        {"date": h.get("date", ""), "name": h.get("name", ""),
-         "localName": h.get("localName", "")}
+        {"date": h.get("date", ""), "name": h.get("name", ""), "localName": h.get("localName", "")}
         for h in holidays
     ]
     return sorted(result, key=lambda x: x["date"])

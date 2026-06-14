@@ -1,14 +1,12 @@
 """EstudaFlow - Organizador de Estudos para Estudantes."""
 
-import json
 import tkinter as tk
-from tkinter import messagebox, ttk
-from datetime import datetime, date
+from datetime import date, datetime
 from pathlib import Path
+from tkinter import messagebox, ttk
 
+from src.models import Subject, Task
 from src.storage import Storage
-from src.models import Task, Subject
-
 
 DATA_FILE = Path.home() / ".estudaflow" / "data.json"
 
@@ -147,16 +145,21 @@ class EstudaFlowApp:
         form = tk.Frame(parent, bg="#1A1D2E", pady=16, padx=20)
         form.pack(fill="x", pady=(0, 12))
 
-        tk.Label(form, text="Nova Tarefa", bg="#1A1D2E", fg="#6C63FF",
-                 font=("Georgia", 13, "bold")).grid(row=0, column=0, columnspan=6,
-                                                    sticky="w", pady=(0, 10))
+        tk.Label(
+            form, text="Nova Tarefa", bg="#1A1D2E", fg="#6C63FF", font=("Georgia", 13, "bold")
+        ).grid(row=0, column=0, columnspan=6, sticky="w", pady=(0, 10))
 
-        lbl = lambda t: tk.Label(form, text=t, bg="#1A1D2E", fg="#94A3B8",
-                                 font=("Courier New", 9))
-        ent = lambda w=22: tk.Entry(form, width=w, bg="#252840", fg="#E2E8F0",
-                                    insertbackground="#E2E8F0",
-                                    font=("Courier New", 10), relief="flat",
-                                    bd=4)
+        lbl = lambda t: tk.Label(form, text=t, bg="#1A1D2E", fg="#94A3B8", font=("Courier New", 9))
+        ent = lambda w=22: tk.Entry(
+            form,
+            width=w,
+            bg="#252840",
+            fg="#E2E8F0",
+            insertbackground="#E2E8F0",
+            font=("Courier New", 10),
+            relief="flat",
+            bd=4,
+        )
 
         lbl("Título *").grid(row=1, column=0, sticky="w")
         self.task_title = ent(26)
@@ -165,8 +168,11 @@ class EstudaFlowApp:
         lbl("Disciplina").grid(row=1, column=2, sticky="w")
         self.task_subject_var = tk.StringVar()
         self.task_subject_combo = ttk.Combobox(
-            form, textvariable=self.task_subject_var, width=18,
-            font=("Courier New", 10), state="readonly"
+            form,
+            textvariable=self.task_subject_var,
+            width=18,
+            font=("Courier New", 10),
+            state="readonly",
         )
         self.task_subject_combo.grid(row=1, column=3, padx=(4, 12))
 
@@ -176,26 +182,26 @@ class EstudaFlowApp:
 
         lbl("Prioridade").grid(row=2, column=0, sticky="w", pady=(8, 0))
         self.task_priority = ttk.Combobox(
-            form, values=["Alta", "Média", "Baixa"], width=10,
-            font=("Courier New", 10), state="readonly"
+            form,
+            values=["Alta", "Média", "Baixa"],
+            width=10,
+            font=("Courier New", 10),
+            state="readonly",
         )
         self.task_priority.set("Média")
-        self.task_priority.grid(row=2, column=1, sticky="w", padx=(4, 12),
-                                pady=(8, 0))
+        self.task_priority.grid(row=2, column=1, sticky="w", padx=(4, 12), pady=(8, 0))
 
         lbl("Notas").grid(row=2, column=2, sticky="w", pady=(8, 0))
         self.task_notes = ent(34)
-        self.task_notes.grid(row=2, column=3, columnspan=2, sticky="w",
-                             padx=(4, 12), pady=(8, 0))
+        self.task_notes.grid(row=2, column=3, columnspan=2, sticky="w", padx=(4, 12), pady=(8, 0))
 
-        ttk.Button(form, text="+ Adicionar", style="Accent.TButton",
-                   command=self._add_task).grid(row=2, column=5, padx=(4, 0),
-                                                pady=(8, 0))
+        ttk.Button(form, text="+ Adicionar", style="Accent.TButton", command=self._add_task).grid(
+            row=2, column=5, padx=(4, 0), pady=(8, 0)
+        )
 
         # ── list
         cols = ("title", "subject", "due", "priority", "done")
-        self.task_tree = ttk.Treeview(parent, columns=cols, show="headings",
-                                      height=14)
+        self.task_tree = ttk.Treeview(parent, columns=cols, show="headings", height=14)
         for col, head, w in [
             ("title", "Título", 220),
             ("subject", "Disciplina", 140),
@@ -206,20 +212,19 @@ class EstudaFlowApp:
             self.task_tree.heading(col, text=head)
             self.task_tree.column(col, width=w, anchor="w")
 
-        sb = ttk.Scrollbar(parent, orient="vertical",
-                           command=self.task_tree.yview)
+        sb = ttk.Scrollbar(parent, orient="vertical", command=self.task_tree.yview)
         self.task_tree.configure(yscrollcommand=sb.set)
         self.task_tree.pack(side="left", fill="both", expand=True)
         sb.pack(side="left", fill="y")
 
         btn_row = tk.Frame(self.tab_tasks, bg="#0F1117")
         btn_row.pack(fill="x", pady=8)
-        ttk.Button(btn_row, text="✔ Marcar concluída",
-                   style="Accent.TButton",
-                   command=self._toggle_task).pack(side="left", padx=(0, 8))
-        ttk.Button(btn_row, text="✕ Remover",
-                   style="Danger.TButton",
-                   command=self._remove_task).pack(side="left")
+        ttk.Button(
+            btn_row, text="✔ Marcar concluída", style="Accent.TButton", command=self._toggle_task
+        ).pack(side="left", padx=(0, 8))
+        ttk.Button(
+            btn_row, text="✕ Remover", style="Danger.TButton", command=self._remove_task
+        ).pack(side="left")
 
     # ------------------------------------------------------------------ SUBJ
     def _build_subjects_tab(self):
@@ -228,17 +233,21 @@ class EstudaFlowApp:
         form = tk.Frame(parent, bg="#1A1D2E", pady=16, padx=20)
         form.pack(fill="x", pady=(0, 12))
 
-        tk.Label(form, text="Nova Disciplina", bg="#1A1D2E", fg="#6C63FF",
-                 font=("Georgia", 13, "bold")).grid(row=0, column=0,
-                                                    columnspan=4, sticky="w",
-                                                    pady=(0, 10))
+        tk.Label(
+            form, text="Nova Disciplina", bg="#1A1D2E", fg="#6C63FF", font=("Georgia", 13, "bold")
+        ).grid(row=0, column=0, columnspan=4, sticky="w", pady=(0, 10))
 
-        lbl = lambda t: tk.Label(form, text=t, bg="#1A1D2E", fg="#94A3B8",
-                                 font=("Courier New", 9))
-        ent = lambda w=22: tk.Entry(form, width=w, bg="#252840", fg="#E2E8F0",
-                                    insertbackground="#E2E8F0",
-                                    font=("Courier New", 10), relief="flat",
-                                    bd=4)
+        lbl = lambda t: tk.Label(form, text=t, bg="#1A1D2E", fg="#94A3B8", font=("Courier New", 9))
+        ent = lambda w=22: tk.Entry(
+            form,
+            width=w,
+            bg="#252840",
+            fg="#E2E8F0",
+            insertbackground="#E2E8F0",
+            font=("Courier New", 10),
+            relief="flat",
+            bd=4,
+        )
 
         lbl("Nome *").grid(row=1, column=0, sticky="w")
         self.subj_name = ent()
@@ -251,16 +260,14 @@ class EstudaFlowApp:
         lbl("Cor (hex)").grid(row=2, column=0, sticky="w", pady=(8, 0))
         self.subj_color = ent(10)
         self.subj_color.insert(0, "#6C63FF")
-        self.subj_color.grid(row=2, column=1, sticky="w", padx=(4, 12),
-                             pady=(8, 0))
+        self.subj_color.grid(row=2, column=1, sticky="w", padx=(4, 12), pady=(8, 0))
 
-        ttk.Button(form, text="+ Adicionar", style="Accent.TButton",
-                   command=self._add_subject).grid(row=2, column=3,
-                                                   padx=(4, 0), pady=(8, 0))
+        ttk.Button(
+            form, text="+ Adicionar", style="Accent.TButton", command=self._add_subject
+        ).grid(row=2, column=3, padx=(4, 0), pady=(8, 0))
 
         cols = ("name", "teacher", "color", "tasks")
-        self.subj_tree = ttk.Treeview(parent, columns=cols, show="headings",
-                                      height=16)
+        self.subj_tree = ttk.Treeview(parent, columns=cols, show="headings", height=16)
         for col, head, w in [
             ("name", "Nome", 200),
             ("teacher", "Professor", 180),
@@ -270,25 +277,31 @@ class EstudaFlowApp:
             self.subj_tree.heading(col, text=head)
             self.subj_tree.column(col, width=w, anchor="w")
 
-        sb2 = ttk.Scrollbar(parent, orient="vertical",
-                            command=self.subj_tree.yview)
+        sb2 = ttk.Scrollbar(parent, orient="vertical", command=self.subj_tree.yview)
         self.subj_tree.configure(yscrollcommand=sb2.set)
         self.subj_tree.pack(side="left", fill="both", expand=True)
         sb2.pack(side="left", fill="y")
 
         btn_row = tk.Frame(self.tab_subjects, bg="#0F1117")
         btn_row.pack(fill="x", pady=8)
-        ttk.Button(btn_row, text="✕ Remover disciplina",
-                   style="Danger.TButton",
-                   command=self._remove_subject).pack(side="left")
+        ttk.Button(
+            btn_row,
+            text="✕ Remover disciplina",
+            style="Danger.TButton",
+            command=self._remove_subject,
+        ).pack(side="left")
 
     # ------------------------------------------------------------------ SUMM
     def _build_summary_tab(self):
         parent = self.tab_summary
         self.summary_frame = tk.Frame(parent, bg="#0F1117")
         self.summary_frame.pack(fill="both", expand=True, padx=8, pady=8)
-        ttk.Button(parent, text="↻ Atualizar resumo", style="Accent.TButton",
-                   command=self._refresh_summary).pack(pady=8)
+        ttk.Button(
+            parent,
+            text="↻ Atualizar resumo",
+            style="Accent.TButton",
+            command=self._refresh_summary,
+        ).pack(pady=8)
         self._refresh_summary()
 
     # ------------------------------------------------------------------ LOGIC
@@ -304,8 +317,7 @@ class EstudaFlowApp:
             try:
                 due_date = datetime.strptime(due_str, "%d/%m/%Y").date().isoformat()
             except ValueError:
-                messagebox.showwarning("Atenção",
-                                       "Prazo inválido. Use DD/MM/AAAA.")
+                messagebox.showwarning("Atenção", "Prazo inválido. Use DD/MM/AAAA.")
                 return
 
         task = Task(
@@ -375,9 +387,9 @@ class EstudaFlowApp:
         for task in self.storage.tasks:
             status = "✔ Concluída" if task.done else "⏳ Pendente"
             self.task_tree.insert(
-                "", "end",
-                values=(task.title, task.subject, task.due or "—",
-                        task.priority, status),
+                "",
+                "end",
+                values=(task.title, task.subject, task.due or "—", task.priority, status),
                 tags=("done",) if task.done else (),
             )
         self.task_tree.tag_configure("done", foreground="#64748B")
@@ -387,10 +399,10 @@ class EstudaFlowApp:
         for row in self.subj_tree.get_children():
             self.subj_tree.delete(row)
         for subj in self.storage.subjects:
-            count = sum(1 for t in self.storage.tasks
-                        if t.subject == subj.name)
+            count = sum(1 for t in self.storage.tasks if t.subject == subj.name)
             self.subj_tree.insert(
-                "", "end",
+                "",
+                "end",
                 values=(subj.name, subj.teacher or "—", subj.color, count),
             )
 
@@ -407,8 +419,7 @@ class EstudaFlowApp:
         done = sum(1 for t in tasks if t.done)
         pending = total - done
         overdue = sum(
-            1 for t in tasks
-            if not t.done and t.due and t.due < date.today().isoformat()
+            1 for t in tasks if not t.done and t.due and t.due < date.today().isoformat()
         )
 
         stats = [
@@ -424,15 +435,19 @@ class EstudaFlowApp:
         for label, value, color in stats:
             card = tk.Frame(row_frame, bg="#1A1D2E", padx=24, pady=16)
             card.pack(side="left", padx=10)
-            tk.Label(card, text=str(value), bg="#1A1D2E", fg=color,
-                     font=("Georgia", 32, "bold")).pack()
-            tk.Label(card, text=label, bg="#1A1D2E", fg="#94A3B8",
-                     font=("Courier New", 9)).pack()
+            tk.Label(
+                card, text=str(value), bg="#1A1D2E", fg=color, font=("Georgia", 32, "bold")
+            ).pack()
+            tk.Label(card, text=label, bg="#1A1D2E", fg="#94A3B8", font=("Courier New", 9)).pack()
 
         # Tarefas por disciplina
-        tk.Label(self.summary_frame, text="Tarefas por disciplina",
-                 bg="#0F1117", fg="#6C63FF",
-                 font=("Georgia", 13, "bold")).pack(anchor="w", padx=10)
+        tk.Label(
+            self.summary_frame,
+            text="Tarefas por disciplina",
+            bg="#0F1117",
+            fg="#6C63FF",
+            font=("Georgia", 13, "bold"),
+        ).pack(anchor="w", padx=10)
 
         for subj in self.storage.subjects:
             subj_tasks = [t for t in tasks if t.subject == subj.name]
@@ -441,13 +456,20 @@ class EstudaFlowApp:
             subj_done = sum(1 for t in subj_tasks if t.done)
             line = tk.Frame(self.summary_frame, bg="#1A1D2E", pady=8, padx=16)
             line.pack(fill="x", padx=10, pady=3)
-            tk.Label(line, text=subj.name, bg="#1A1D2E", fg="#E2E8F0",
-                     font=("Courier New", 11, "bold"), width=20,
-                     anchor="w").pack(side="left")
+            tk.Label(
+                line,
+                text=subj.name,
+                bg="#1A1D2E",
+                fg="#E2E8F0",
+                font=("Courier New", 11, "bold"),
+                width=20,
+                anchor="w",
+            ).pack(side="left")
             tk.Label(
                 line,
                 text=f"{subj_done}/{len(subj_tasks)} concluídas",
-                bg="#1A1D2E", fg="#94A3B8",
+                bg="#1A1D2E",
+                fg="#94A3B8",
                 font=("Courier New", 10),
             ).pack(side="left", padx=16)
 

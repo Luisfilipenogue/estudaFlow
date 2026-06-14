@@ -1,11 +1,17 @@
 """EstudaFlow — aplicação Flask com Supabase."""
 
-from flask import Flask, render_template, request, jsonify
 from datetime import date
 
+from flask import Flask, jsonify, render_template, request
+
 from src.database import (
-    get_tasks, add_task, toggle_task, delete_task,
-    get_subjects, add_subject, delete_subject,
+    add_subject,
+    add_task,
+    delete_subject,
+    delete_task,
+    get_subjects,
+    get_tasks,
+    toggle_task,
 )
 from src.holidays import fetch_holidays, format_holidays, get_upcoming_holidays, is_holiday
 
@@ -24,6 +30,7 @@ def _get_holidays(year: int | None = None) -> list[dict]:
 
 # ─────────────────────────────────────── páginas ──────────────────────────────
 
+
 @app.route("/")
 def index():
     try:
@@ -38,7 +45,8 @@ def index():
     done = sum(1 for t in tasks if t.get("done"))
     pending = total - done
     overdue = sum(
-        1 for t in tasks
+        1
+        for t in tasks
         if not t.get("done") and t.get("due") and t["due"] < date.today().isoformat()
     )
     return render_template(
@@ -64,8 +72,7 @@ def tarefas():
 
     holidays = _get_holidays()
     tasks_with_flag = [
-        {"task": t, "is_holiday": is_holiday(t.get("due", ""), holidays)}
-        for t in tasks
+        {"task": t, "is_holiday": is_holiday(t.get("due", ""), holidays)} for t in tasks
     ]
     return render_template("tarefas.html", tasks_with_flag=tasks_with_flag, subjects=subjects)
 
@@ -93,6 +100,7 @@ def feriados():
 
 
 # ─────────────────────────────────────── API JSON ─────────────────────────────
+
 
 @app.route("/api/tasks", methods=["GET"])
 def api_get_tasks():

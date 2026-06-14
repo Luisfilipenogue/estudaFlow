@@ -3,7 +3,7 @@
 import json
 from pathlib import Path
 
-from src.models import Task, Subject
+from src.models import Subject, Task
 
 
 class Storage:

@@ -1,16 +1,15 @@
 """Testes automatizados do EstudaFlow."""
 
-import json
 import tempfile
 from pathlib import Path
 
 import pytest
 
-from src.models import Task, Subject
+from src.models import Subject, Task
 from src.storage import Storage
 
-
 # ───────────────────────────── helpers ──────────────────────────────────────
+
 
 def make_storage() -> Storage:
     """Retorna um Storage em diretório temporário."""
@@ -19,6 +18,7 @@ def make_storage() -> Storage:
 
 
 # ═══════════════════════════ Task model ══════════════════════════════════════
+
 
 class TestTaskModel:
     def test_default_values(self):
@@ -29,8 +29,13 @@ class TestTaskModel:
         assert t.subject == ""
 
     def test_to_dict_round_trip(self):
-        t = Task(title="Revisar capítulo 3", subject="Física",
-                 priority="Alta", due="2025-12-01", notes="ver págs 40-60")
+        t = Task(
+            title="Revisar capítulo 3",
+            subject="Física",
+            priority="Alta",
+            due="2025-12-01",
+            notes="ver págs 40-60",
+        )
         d = t.to_dict()
         t2 = Task.from_dict(d)
         assert t2.title == t.title
@@ -50,6 +55,7 @@ class TestTaskModel:
 
 # ═══════════════════════════ Subject model ═══════════════════════════════════
 
+
 class TestSubjectModel:
     def test_default_color(self):
         s = Subject(name="Matemática")
@@ -65,6 +71,7 @@ class TestSubjectModel:
 
 
 # ═══════════════════════════ Storage — tasks ═════════════════════════════════
+
 
 class TestStorageTasks:
     def test_add_and_retrieve_task(self):
@@ -130,6 +137,7 @@ class TestStorageTasks:
 
 # ═══════════════════════════ Storage — subjects ══════════════════════════════
 
+
 class TestStorageSubjects:
     def test_add_subject(self):
         st = make_storage()
@@ -160,6 +168,7 @@ class TestStorageSubjects:
 
 
 # ═══════════════════════════ Storage — persistence ═══════════════════════════
+
 
 class TestStoragePersistence:
     def test_save_and_load(self):
