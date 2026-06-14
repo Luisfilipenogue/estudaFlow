@@ -178,11 +178,10 @@ A cada `push` ou `pull request` o GitHub Actions executa:
 
 ---
 
-## 👤 Autor
+## 👥 Integrantes
 
-**Luis Filipe Nogueira de Moraes Araujo**  
-Disciplina: Bootcamp II  
-Repositório: [https://github.com/Luisfilipenogue/estudaFlow](https://github.com/Luisfilipenogue/estudaFlow)
+- **Luis Filipe Nogueira de Moraes Araujo** — [@Luisfilipenogue](https://github.com/Luisfilipenogue)
+- **Lucas Barbosa dos Reis** — [@LucasBarbosadosReis](https://github.com/LucasBarbosadosReis)
 
 ---
 
